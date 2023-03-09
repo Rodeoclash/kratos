@@ -125,6 +125,7 @@ Class | Method | HTTP request | Description
 *IdentityApi* | [**ListIdentitySchemas**](docs/IdentityApi.md#listidentityschemas) | **Get** /schemas | Get all Identity Schemas
 *IdentityApi* | [**ListIdentitySessions**](docs/IdentityApi.md#listidentitysessions) | **Get** /admin/identities/{id}/sessions | List an Identity&#39;s Sessions
 *IdentityApi* | [**ListSessions**](docs/IdentityApi.md#listsessions) | **Get** /admin/sessions | List All Sessions
+*IdentityApi* | [**PatchIdentities**](docs/IdentityApi.md#patchidentities) | **Patch** /admin/identities | Create and deletes multiple identities
 *IdentityApi* | [**PatchIdentity**](docs/IdentityApi.md#patchidentity) | **Patch** /admin/identities/{id} | Patch an Identity
 *IdentityApi* | [**UpdateIdentity**](docs/IdentityApi.md#updateidentity) | **Put** /admin/identities/{id} | Update an Identity
 *MetadataApi* | [**GetVersion**](docs/MetadataApi.md#getversion) | **Get** /version | Return Running Software Version.
@@ -156,6 +157,8 @@ Class | Method | HTTP request | Description
  - [IdentityCredentialsOidcProvider](docs/IdentityCredentialsOidcProvider.md)
  - [IdentityCredentialsPassword](docs/IdentityCredentialsPassword.md)
  - [IdentityCredentialsType](docs/IdentityCredentialsType.md)
+ - [IdentityPatch](docs/IdentityPatch.md)
+ - [IdentityPatchResponse](docs/IdentityPatchResponse.md)
  - [IdentitySchemaContainer](docs/IdentitySchemaContainer.md)
  - [IdentityState](docs/IdentityState.md)
  - [IdentityWithCredentials](docs/IdentityWithCredentials.md)
@@ -176,6 +179,8 @@ Class | Method | HTTP request | Description
  - [OAuth2ConsentRequestOpenIDConnectContext](docs/OAuth2ConsentRequestOpenIDConnectContext.md)
  - [OAuth2LoginRequest](docs/OAuth2LoginRequest.md)
  - [Pagination](docs/Pagination.md)
+ - [PatchIdentitiesBody](docs/PatchIdentitiesBody.md)
+ - [PatchIdentitiesResponse](docs/PatchIdentitiesResponse.md)
  - [PerformNativeLogoutBody](docs/PerformNativeLogoutBody.md)
  - [RecoveryCodeForIdentity](docs/RecoveryCodeForIdentity.md)
  - [RecoveryFlow](docs/RecoveryFlow.md)

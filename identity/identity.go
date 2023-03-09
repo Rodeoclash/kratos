@@ -69,8 +69,8 @@ type Identity struct {
 	// Credentials represents all credentials that can be used for authenticating this identity.
 	Credentials map[CredentialsType]Credentials `json:"credentials,omitempty" faker:"-" db:"-"`
 
-	//// IdentifierCredentials contains the access and refresh token for oidc identifier
-	//IdentifierCredentials []IdentifierCredential `json:"identifier_credentials,omitempty" faker:"-" db:"-"`
+	// // IdentifierCredentials contains the access and refresh token for oidc identifier
+	// IdentifierCredentials []IdentifierCredential `json:"identifier_credentials,omitempty" faker:"-" db:"-"`
 
 	// SchemaID is the ID of the JSON Schema to be used for validating the identity's traits.
 	//
@@ -154,7 +154,6 @@ func (i *Identity) setCredentials(tx *pop.Connection) error {
 		}
 		if err := cred.AfterEagerFind(tx); err != nil {
 			return err
-
 		}
 		i.Credentials[cred.Type] = *cred
 	}
@@ -460,4 +459,94 @@ func (i *Identity) WithDeclassifiedCredentialsOIDC(ctx context.Context, c cipher
 	ii := *i
 	ii.Credentials = credsToPublish
 	return &ii, nil
+}
+
+// Patch Identities Parameters
+//
+// swagger:parameters patchIdentities
+//
+//nolint:deadcode,unused
+//lint:ignore U1000 Used to generate Swagger and OpenAPI definitions
+type patchIdentitites struct {
+	// in: body
+	Body PatchIdentitiesBody
+}
+
+// Patch Identities Body
+//
+// swagger:model patchIdentitiesBody
+//
+//lint:ignore U1000 Used to generate Swagger and OpenAPI definitions
+type PatchIdentitiesBody struct {
+	// Identities holds the list of patches to apply
+	//
+	// required
+	Identities []*IdentityPatch `json:"identities"`
+
+	// Future fields:
+	// RemotePatchesURL string
+	// Async bool
+}
+
+// Payload for patching an identity
+//
+// swagger:model identityPatch
+//
+//lint:ignore U1000 Used to generate Swagger and OpenAPI definitions
+type IdentityPatch struct {
+	// The identity to create.
+	Create *CreateIdentityBody `json:"create"`
+
+	// The ID of this patch.
+	//
+	// The patch ID is optional. If specified, the ID will be returned in the
+	// response, so consumers of this API can correlate the response with the
+	// patch.
+	ID *uuid.UUID `json:"patch_id"`
+}
+
+// swagger:enum PatchAction
+//
+//lint:ignore U1000 Used to generate Swagger and OpenAPI definitions
+type PatchAction string
+
+const (
+	// Create this identity.
+	ActionCreate PatchAction = "create"
+
+	// Future actions:
+	//
+	// Delete this identity.
+	// ActionDelete PatchAction = "delete"
+	//
+	// ActionUpdate PatchAction = "update"
+)
+
+// Patch identities response
+//
+// swagger:model patchIdentitiesResponse
+//
+//lint:ignore U1000 Used to generate Swagger and OpenAPI definitions
+type patchIdentitiesResponse struct {
+	// The patch responses for the individual identities.
+	Identities []*IdentityPatchResponse `json:"identities"`
+}
+
+// Response for a single identity patch
+//
+// swagger:model identityPatchResponse
+//
+//lint:ignore U1000 Used to generate Swagger and OpenAPI definitions
+type IdentityPatchResponse struct {
+	// The action for this specific patch
+	Action PatchAction `json:"action"`
+
+	// The identity ID payload of this patch
+	IdentityID *uuid.UUID `json:"identity,omitempty"`
+
+	// The ID of this patch response, if an ID was specified in the patch.
+	PatchID *uuid.UUID `json:"patch_id,omitempty"`
+
+	// The error that occurred, if any.
+	Error *herodot.DefaultError `json:"error,omitempty"`
 }

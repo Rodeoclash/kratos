@@ -280,6 +280,64 @@
             }
           }
         }
+      },
+      "patch": {
+        "security": [
+          {
+            "oryAccessToken": []
+          }
+        ],
+        "description": "Creates or delete multiple\n[identities](https://www.ory.sh/docs/kratos/concepts/identity-user-model).\nThis endpoint can also be used to [import\ncredentials](https://www.ory.sh/docs/kratos/manage-identities/import-user-accounts-identities)\nfor instance passwords, social sign in configurations or multifactor methods.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "http",
+          "https"
+        ],
+        "tags": [
+          "identity"
+        ],
+        "summary": "Create and deletes multiple identities",
+        "operationId": "patchIdentities",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/patchIdentitiesBody"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "patchIdentitiesResponse",
+            "schema": {
+              "$ref": "#/definitions/patchIdentitiesResponse"
+            }
+          },
+          "400": {
+            "description": "patchIdentitiesResponse",
+            "schema": {
+              "$ref": "#/definitions/patchIdentitiesResponse"
+            }
+          },
+          "409": {
+            "description": "patchIdentitiesResponse",
+            "schema": {
+              "$ref": "#/definitions/patchIdentitiesResponse"
+            }
+          },
+          "default": {
+            "description": "errorGeneric",
+            "schema": {
+              "$ref": "#/definitions/errorGeneric"
+            }
+          }
+        }
       }
     },
     "/admin/identities/{id}": {
@@ -3756,6 +3814,47 @@
       "type": "string",
       "title": "CredentialsType  represents several different credential types, like password credentials, passwordless credentials,"
     },
+    "identityPatch": {
+      "description": "Payload for patching an identity",
+      "type": "object",
+      "properties": {
+        "create": {
+          "$ref": "#/definitions/createIdentityBody"
+        },
+        "patch_id": {
+          "description": "The ID of this patch.\n\nThe patch ID is optional. If specified, the ID will be returned in the\nresponse, so consumers of this API can correlate the response with the\npatch.",
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "identityPatchResponse": {
+      "description": "Response for a single identity patch",
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "The action for this specific patch\ncreate ActionCreate  Create this identity.",
+          "type": "string",
+          "enum": [
+            "create"
+          ],
+          "x-go-enum-desc": "create ActionCreate  Create this identity."
+        },
+        "error": {
+          "$ref": "#/definitions/genericError"
+        },
+        "identity": {
+          "description": "The identity ID payload of this patch",
+          "type": "string",
+          "format": "uuid"
+        },
+        "patch_id": {
+          "description": "The ID of this patch response, if an ID was specified in the patch.",
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
     "identitySchema": {
       "description": "Raw JSON Schema",
       "type": "object"
@@ -4198,6 +4297,32 @@
           "default": 250,
           "maximum": 1000,
           "minimum": 1
+        }
+      }
+    },
+    "patchIdentitiesBody": {
+      "description": "Patch Identities Body",
+      "type": "object",
+      "properties": {
+        "identities": {
+          "description": "Identities holds the list of patches to apply\n\nrequired",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/identityPatch"
+          }
+        }
+      }
+    },
+    "patchIdentitiesResponse": {
+      "description": "Patch identities response",
+      "type": "object",
+      "properties": {
+        "identities": {
+          "description": "The patch responses for the individual identities.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/identityPatchResponse"
+          }
         }
       }
     },

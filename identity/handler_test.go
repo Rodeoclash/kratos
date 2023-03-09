@@ -16,25 +16,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
-
-	"github.com/ory/kratos/hash"
-	"github.com/ory/x/snapshotx"
-
 	"github.com/bxcodec/faker/v3"
+	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
 
-	"github.com/ory/x/sqlxx"
-	"github.com/ory/x/urlx"
-
 	"github.com/ory/kratos/driver/config"
+	"github.com/ory/kratos/hash"
 	"github.com/ory/kratos/identity"
 	"github.com/ory/kratos/internal"
 	"github.com/ory/kratos/internal/testhelpers"
 	"github.com/ory/kratos/schema"
 	"github.com/ory/kratos/x"
+	"github.com/ory/x/snapshotx"
+	"github.com/ory/x/sqlxx"
+	"github.com/ory/x/urlx"
 )
 
 func TestHandler(t *testing.T) {
@@ -55,7 +52,7 @@ func TestHandler(t *testing.T) {
 
 	conf.MustSet(ctx, config.ViperKeyPublicBaseURL, mockServerURL.String())
 
-	var get = func(t *testing.T, base *httptest.Server, href string, expectCode int) gjson.Result {
+	get := func(t *testing.T, base *httptest.Server, href string, expectCode int) gjson.Result {
 		t.Helper()
 		res, err := base.Client().Get(base.URL + href)
 		require.NoError(t, err)
@@ -67,7 +64,7 @@ func TestHandler(t *testing.T) {
 		return gjson.ParseBytes(body)
 	}
 
-	var remove = func(t *testing.T, base *httptest.Server, href string, expectCode int) {
+	remove := func(t *testing.T, base *httptest.Server, href string, expectCode int) {
 		t.Helper()
 		req, err := http.NewRequest("DELETE", base.URL+href, nil)
 		require.NoError(t, err)
@@ -78,7 +75,7 @@ func TestHandler(t *testing.T) {
 		require.EqualValues(t, expectCode, res.StatusCode)
 	}
 
-	var send = func(t *testing.T, base *httptest.Server, method, href string, expectCode int, send interface{}) gjson.Result {
+	send := func(t *testing.T, base *httptest.Server, method, href string, expectCode int, send interface{}) gjson.Result {
 		t.Helper()
 		var b bytes.Buffer
 		if send != nil {
@@ -124,7 +121,6 @@ func TestHandler(t *testing.T) {
 				i.SchemaID = "does-not-exist"
 				res := send(t, ts, "POST", "/identities", http.StatusBadRequest, &i)
 				assert.Contains(t, res.Get("error.reason").String(), "does-not-exist", "%s", res)
-
 			})
 		}
 	})
@@ -187,7 +183,8 @@ func TestHandler(t *testing.T) {
 		})
 
 		t.Run("with cleartext password and oidc credentials", func(t *testing.T) {
-			res := send(t, adminTS, "POST", "/identities", http.StatusCreated, identity.CreateIdentityBody{Traits: []byte(`{"email": "import-2@ory.sh"}`),
+			res := send(t, adminTS, "POST", "/identities", http.StatusCreated, identity.CreateIdentityBody{
+				Traits: []byte(`{"email": "import-2@ory.sh"}`),
 				Credentials: &identity.IdentityWithCredentials{
 					Password: &identity.AdminIdentityImportCredentialsPassword{
 						Config: identity.AdminIdentityImportCredentialsPasswordConfig{
@@ -259,9 +256,12 @@ func TestHandler(t *testing.T) {
 			} {
 				t.Run("hash="+tt.name, func(t *testing.T) {
 					traits := fmt.Sprintf(`{"email": "import-hash-%d@ory.sh"}`, i)
-					res := send(t, adminTS, "POST", "/identities", http.StatusCreated, identity.CreateIdentityBody{Traits: []byte(traits),
+					res := send(t, adminTS, "POST", "/identities", http.StatusCreated, identity.CreateIdentityBody{
+						Traits: []byte(traits),
 						Credentials: &identity.IdentityWithCredentials{Password: &identity.AdminIdentityImportCredentialsPassword{
-							Config: identity.AdminIdentityImportCredentialsPasswordConfig{HashedPassword: tt.hash}}}})
+							Config: identity.AdminIdentityImportCredentialsPasswordConfig{HashedPassword: tt.hash},
+						}},
+					})
 					actual, err := reg.PrivilegedIdentityPool().GetIdentityConfidential(ctx, uuid.FromStringOrNil(res.Get("id").String()))
 					require.NoError(t, err)
 
@@ -284,7 +284,7 @@ func TestHandler(t *testing.T) {
 
 	t.Run("suite=create and update", func(t *testing.T) {
 		var i identity.Identity
-		var createOidcIdentity = func(t *testing.T, identifier, accessToken, refreshToken, idToken string, encrypt bool) string {
+		createOidcIdentity := func(t *testing.T, identifier, accessToken, refreshToken, idToken string, encrypt bool) string {
 			transform := func(token string) string {
 				if !encrypt {
 					return token
@@ -387,7 +387,8 @@ func TestHandler(t *testing.T) {
 						Type:        identity.CredentialsTypePassword,
 						Identifiers: []string{"find.by.identifier@bar.com"},
 						Config:      sqlxx.JSONRawMessage(`{"hashed_password":"$2a$08$.cOYmAd.vCpDOoiVJrO5B.hjTLKQQ6cAK40u8uB.FnZDyPvVvQ9Q."}`), // foobar
-					}},
+					},
+				},
 				State:  identity.StateActive,
 				Traits: identity.Traits(`{"username":"find.by.identifier@bar.com"}`),
 			}
@@ -565,6 +566,38 @@ func TestHandler(t *testing.T) {
 		})
 	})
 
+	t.Run("suite=PATCH identities", func(t *testing.T) {
+		req := &identity.PatchIdentitiesBody{
+			Identities: []*identity.IdentityPatch{
+				{
+					Create: &identity.CreateIdentityBody{Traits: []byte(`{"email": "batch-import-1@ory.sh"}`)},
+				},
+				{
+					Create: &identity.CreateIdentityBody{Traits: []byte(`{"email": "batch-import-2@ory.sh"}`)},
+				},
+				{
+					Create: &identity.CreateIdentityBody{Traits: []byte(`{"email": "batch-import-3@ory.sh"}`)},
+				},
+				{
+					Create: &identity.CreateIdentityBody{Traits: []byte(`{"email": "batch-import-4@ory.sh"}`)},
+				},
+				{
+					Create: &identity.CreateIdentityBody{Traits: []byte(`{"email": "batch-import-1@ory.sh"}`)},
+				},
+			},
+		}
+		res := send(t, adminTS, "PATCH", "/identities", http.StatusOK, req)
+		assert.Len(t, res.Get("identities").Array(), len(req.Identities))
+		assert.Empty(t, res.Get("identities.0.error").Raw)
+		identityID := res.Get("identities.0.identity").String()
+		require.NotEmpty(t, identityID)
+
+		getIdentity := get(t, adminTS, "/identities/"+identityID, http.StatusOK)
+		assert.Equal(t, "batch-import-1@ory.sh", getIdentity.Get("traits.email").String())
+
+		assert.Equal(t, res.Get("identities.4.error.status").String(), "Conflict")
+	})
+
 	t.Run("case=PATCH update of state should update state changed at timestamp", func(t *testing.T) {
 		uuid := x.NewUUID().String()
 		i := &identity.Identity{Traits: identity.Traits(fmt.Sprintf(`{"subject":"%s"}`, uuid))}
@@ -614,7 +647,6 @@ func TestHandler(t *testing.T) {
 				assert.EqualValues(t, uuid, res.Get("traits.subject").String(), "%s", res.Raw)
 				assert.False(t, res.Get("metadata_admin.admin").Exists(), "%s", res.Raw)
 				assert.False(t, res.Get("metadata_public.public").Exists(), "%s", res.Raw)
-
 			})
 		}
 	})
@@ -684,7 +716,6 @@ func TestHandler(t *testing.T) {
 		require.NoError(t, reg.PrivilegedIdentityPool().CreateIdentity(context.Background(), i))
 
 		for name, ts := range map[string]*httptest.Server{"public": publicTS, "admin": adminTS} {
-
 			t.Run("endpoint="+name, func(t *testing.T) {
 				patch := []patch{
 					{"op": "replace", "path": "/credentials", "value": "patched-credentials"},
@@ -1092,60 +1123,61 @@ func TestHandler(t *testing.T) {
 				snapshotx.SnapshotT(t, identity.WithCredentialsAndAdminMetadataInJSON(*actual), snapshotx.ExceptNestedKeys(append(ignoreDefault, "hashed_password")...), snapshotx.ExceptPaths("credentials.oidc.identifiers"))
 			})
 			t.Run("type=remove webauthn passwordless and multiple fido mfa type/"+name, func(t *testing.T) {
-				var config = identity.CredentialsWebAuthnConfig{
-					Credentials: identity.CredentialsWebAuthn{{
-						// Passwordless 1
-						ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE1ju+7PBaYA7Y="),
-						AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
-						PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
-						DisplayName: "test",
-						Authenticator: identity.AuthenticatorWebAuthn{
-							AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
-							SignCount:    0,
-							CloneWarning: false,
+				config := identity.CredentialsWebAuthnConfig{
+					Credentials: identity.CredentialsWebAuthn{
+						{
+							// Passwordless 1
+							ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE1ju+7PBaYA7Y="),
+							AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
+							PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
+							DisplayName: "test",
+							Authenticator: identity.AuthenticatorWebAuthn{
+								AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
+								SignCount:    0,
+								CloneWarning: false,
+							},
+							IsPasswordless:  true,
+							AttestationType: "none",
+						}, {
+							// Passwordless 2
+							ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE2ju+7PBaYA7Y="),
+							AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
+							PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
+							DisplayName: "test",
+							Authenticator: identity.AuthenticatorWebAuthn{
+								AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
+								SignCount:    0,
+								CloneWarning: false,
+							},
+							IsPasswordless:  true,
+							AttestationType: "none",
+						}, {
+							// MFA 1
+							ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE3ju+7PBaYA7Y="),
+							AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
+							PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
+							DisplayName: "test",
+							Authenticator: identity.AuthenticatorWebAuthn{
+								AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
+								SignCount:    0,
+								CloneWarning: false,
+							},
+							IsPasswordless:  false,
+							AttestationType: "none",
+						}, {
+							// MFA 2
+							ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE4ju+7PBaYA7Y="),
+							AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
+							PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
+							DisplayName: "test",
+							Authenticator: identity.AuthenticatorWebAuthn{
+								AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
+								SignCount:    0,
+								CloneWarning: false,
+							},
+							IsPasswordless:  false,
+							AttestationType: "none",
 						},
-						IsPasswordless:  true,
-						AttestationType: "none",
-					}, {
-						// Passwordless 2
-						ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE2ju+7PBaYA7Y="),
-						AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
-						PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
-						DisplayName: "test",
-						Authenticator: identity.AuthenticatorWebAuthn{
-							AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
-							SignCount:    0,
-							CloneWarning: false,
-						},
-						IsPasswordless:  true,
-						AttestationType: "none",
-					}, {
-						// MFA 1
-						ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE3ju+7PBaYA7Y="),
-						AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
-						PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
-						DisplayName: "test",
-						Authenticator: identity.AuthenticatorWebAuthn{
-							AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
-							SignCount:    0,
-							CloneWarning: false,
-						},
-						IsPasswordless:  false,
-						AttestationType: "none",
-					}, {
-						// MFA 2
-						ID:          []byte("THTndqZP5Mjvae1BFvJMaMfEMm7O7HE4ju+7PBaYA7Y="),
-						AddedAt:     time.Date(2022, 12, 16, 14, 11, 55, 0, time.UTC),
-						PublicKey:   []byte("pQECAyYgASFYIMJLQhJxQRzhnKPTcPCUODOmxYDYo2obrm9bhp5lvSZ3IlggXjhZvJaPUqF9PXqZqTdWYPR7R+b2n/Wi+IxKKXsS4rU="),
-						DisplayName: "test",
-						Authenticator: identity.AuthenticatorWebAuthn{
-							AAGUID:       []byte("rc4AAjW8xgpkiwsl8fBVAw=="),
-							SignCount:    0,
-							CloneWarning: false,
-						},
-						IsPasswordless:  false,
-						AttestationType: "none",
-					},
 					},
 					UserHandle: []byte("Ef5JiMpMRwuzauWs/9J0gQ=="),
 				}
