@@ -479,8 +479,8 @@ func (h *Handler) identityFromCreateIdentityBody(ctx context.Context, cr *Create
 //
 //	Responses:
 //	  200: patchIdentitiesResponse
-//	  400: patchIdentitiesResponse
-//	  409: patchIdentitiesResponse
+//	  400: errorGeneric
+//	  409: errorGeneric
 //	  default: errorGeneric
 func (h *Handler) patchIdentities(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var (
@@ -493,6 +493,9 @@ func (h *Handler) patchIdentities(w http.ResponseWriter, r *http.Request, _ http
 	}
 
 	res.Identities = make([]*IdentityPatchResponse, len(req.Identities))
+	// Array to look up the index of the identity in the identities array.
+	indexInIdentities := make([]int, len(req.Identities))
+	identities := make(Identities, 0, len(req.Identities))
 
 	for i, patch := range req.Identities {
 		if patch.Create != nil {
@@ -502,15 +505,20 @@ func (h *Handler) patchIdentities(w http.ResponseWriter, r *http.Request, _ http
 			}
 			identity, err := h.identityFromCreateIdentityBody(r.Context(), patch.Create)
 			if err != nil {
-				res.Identities[i].Error = herodot.ToDefaultError(err, "")
-				continue
+				h.r.Writer().WriteError(w, r, err)
+				return
 			}
-			if err := h.r.IdentityManager().Create(r.Context(), identity); err != nil {
-				res.Identities[i].Error = herodot.ToDefaultError(err, "")
-				continue
-			}
-			res.Identities[i].IdentityID = &identity.ID
+			identities = append(identities, *identity)
+			indexInIdentities[i] = len(identities) - 1
 		}
+	}
+
+	if err := h.r.IdentityManager().CreateIdentities(r.Context(), identities); err != nil {
+		h.r.Writer().WriteError(w, r, err)
+		return
+	}
+	for resIdx, identitiesIdx := range indexInIdentities {
+		res.Identities[resIdx].IdentityID = &identities[identitiesIdx].ID
 	}
 
 	h.r.Writer().Write(w, r, &res)

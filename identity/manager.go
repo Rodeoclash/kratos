@@ -88,6 +88,24 @@ func (m *Manager) Create(ctx context.Context, i *Identity, opts ...ManagerOption
 	return m.r.PrivilegedIdentityPool().CreateIdentity(ctx, i)
 }
 
+func (m *Manager) CreateIdentities(ctx context.Context, identities Identities, opts ...ManagerOption) (err error) {
+	ctx, span := m.r.Tracer(ctx).Tracer().Start(ctx, "identity.Manager.Create")
+	defer otelx.End(span, &err)
+
+	for _, i := range identities {
+		if i.SchemaID == "" {
+			i.SchemaID = m.r.Config().DefaultIdentityTraitsSchemaID(ctx)
+		}
+
+		o := newManagerOptions(opts)
+		if err := m.ValidateIdentity(ctx, &i, o); err != nil {
+			return err
+		}
+	}
+
+	return m.r.PrivilegedIdentityPool().CreateIdentities(ctx, identities)
+}
+
 func (m *Manager) requiresPrivilegedAccess(ctx context.Context, original, updated *Identity, o *ManagerOptions) (err error) {
 	_, span := m.r.Tracer(ctx).Tracer().Start(ctx, "identity.Manager.requiresPrivilegedAccess")
 	defer otelx.End(span, &err)

@@ -402,6 +402,26 @@ func (i *Identity) Validate() error {
 	return nil
 }
 
+type Identities []Identity
+
+func (i Identities) VerifiableAddresses() (res []VerifiableAddress) {
+	res = make([]VerifiableAddress, 0, len(i))
+	for _, id := range i {
+		res = append(res, id.VerifiableAddresses...)
+	}
+
+	return res
+}
+
+func (i Identities) RecoveryAddresses() (res []RecoveryAddress) {
+	res = make([]RecoveryAddress, 0, len(i))
+	for _, id := range i {
+		res = append(res, id.RecoveryAddresses...)
+	}
+
+	return res
+}
+
 func (i *Identity) WithDeclassifiedCredentialsOIDC(ctx context.Context, c cipher.Provider) (*Identity, error) {
 	credsToPublish := make(map[CredentialsType]Credentials)
 
