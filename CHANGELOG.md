@@ -5,7 +5,7 @@
 
 **Table of Contents**
 
-- [ (2023-03-13)](#2023-03-13)
+- [ (2023-03-17)](#2023-03-17)
   - [Breaking Changes](#breaking-changes)
     - [Bug Fixes](#bug-fixes)
     - [Code Refactoring](#code-refactoring)
@@ -294,7 +294,7 @@
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# [](https://github.com/ory/kratos/compare/v0.11.1...v) (2023-03-13)
+# [](https://github.com/ory/kratos/compare/v0.11.1...v) (2023-03-17)
 
 ## Breaking Changes
 
@@ -326,6 +326,9 @@ flows.
   ([#3103](https://github.com/ory/kratos/issues/3103))
   ([1193a56](https://github.com/ory/kratos/commit/1193a5681fbc25d03c1e26a4296fa0b9abd2452b)),
   closes [#2950](https://github.com/ory/kratos/issues/2950)
+- Do not omit last page on identity list
+  ([#3169](https://github.com/ory/kratos/issues/3169))
+  ([f95f48a](https://github.com/ory/kratos/commit/f95f48a79395b7b99c7482c0974bc5188e007cc0))
 - Don't reuse ports in courier/SMTP tests
   ([#3156](https://github.com/ory/kratos/issues/3156))
   ([e260fcf](https://github.com/ory/kratos/commit/e260fcf06181ce9339edc729ab74826aa4be78cf))
@@ -404,6 +407,9 @@ flows.
 - Webhook tracing and missing defers
   ([#3145](https://github.com/ory/kratos/issues/3145))
   ([46eb063](https://github.com/ory/kratos/commit/46eb063f414a0ad9b901407cf781002ccb97ad93))
+- Wrong context in logout trace span
+  ([#3168](https://github.com/ory/kratos/issues/3168))
+  ([b9ccccf](https://github.com/ory/kratos/commit/b9ccccf0f1b6a5ba903293133b2be15b528c8308))
 
 ### Code Refactoring
 
@@ -412,6 +418,9 @@ flows.
 
 ### Documentation
 
+- Fix broken docs links and code example to get verification flow
+  ([#3170](https://github.com/ory/kratos/issues/3170))
+  ([bdbddcc](https://github.com/ory/kratos/commit/bdbddcce2909b290e2e04dee493519b842715ab4))
 - Update security email ([#3164](https://github.com/ory/kratos/issues/3164))
   ([9252f5a](https://github.com/ory/kratos/commit/9252f5a3c746927a2f537efc39cb1eb0aba167a5))
 
@@ -425,6 +434,15 @@ flows.
   ([8aa75e9](https://github.com/ory/kratos/commit/8aa75e97e4bfee37e7cf551173b516c6244786ff))
 - Add patreon oidc provider ([#3021](https://github.com/ory/kratos/issues/3021))
   ([20ea29e](https://github.com/ory/kratos/commit/20ea29e018b33231cf6b2743de74d2233f756c2a))
+- Add token prefixes to session and logout tokens
+  ([#3132](https://github.com/ory/kratos/issues/3132))
+  ([8210cd0](https://github.com/ory/kratos/commit/8210cd09200d370b101072649fddd1ad9a7f32a9)):
+
+  This feature adds token prefixes to Ory session and logout tokens:
+
+  - `ory_st_`: Ory session token prefix
+  - `ory_lt_`: Logout token prefix
+
 - Add upstream parameters to oidc provider
   ([#3138](https://github.com/ory/kratos/issues/3138))
   ([b6b1679](https://github.com/ory/kratos/commit/b6b1679c3bd053cd08ff8f26c762735e380fed67)),
@@ -460,10 +478,43 @@ flows.
   ([4a3a076](https://github.com/ory/kratos/commit/4a3a07657d2eb2a39d777565b58882cb48e928fa))
 - Don't pre-generate UUIDs for transient objects
   ([e17f307](https://github.com/ory/kratos/commit/e17f307732f8ced34727d5f3a70929866a0595e0))
+- Drop unused index ([#3165](https://github.com/ory/kratos/issues/3165))
+  ([852dea9](https://github.com/ory/kratos/commit/852dea90881a7c9abdbfc127a2e8d1cc0aacb166))
 - Identity by identifier ([#3077](https://github.com/ory/kratos/issues/3077))
   ([c288d4d](https://github.com/ory/kratos/commit/c288d4d136bca1a9ed3931b4827967eb44e80ede))
 - Improve tracing span naming in hooks
   ([bf828d3](https://github.com/ory/kratos/commit/bf828d3f5d56a963529e98958f4039f0dc569979))
+- Improved oidc flow on duplicate account registration
+  ([#3151](https://github.com/ory/kratos/issues/3151))
+  ([4d2fda4](https://github.com/ory/kratos/commit/4d2fda453b16349589e941af06fcce312c2e5c37)):
+
+  This PR improves the OIDC registration flow when a duplicate account error
+  happens.
+
+  Currently the flow looks as follows:
+
+  1. User registers with password (or other credentials)
+  2. User forgot they registered with password and tries to login through an
+     OIDC provider (e.g. Google)
+  3. Kratos attempts a registration since the OIDC credentials do not exist
+  4. (optional) User needs to add missing traits (e.g. full name) which could
+     not be retrieved from the OIDC provider
+  5. User gets a duplicate account error with a "Continue" button.
+  6. After submitting the "Continue" button the flow continues again to the OIDC
+     provider, back to Kratos and redirects to UI with duplicate error (Steps 3
+     to 5)
+
+  Instead of causing a confusing redirect loop we should show the user the error
+  with a fresh login flow (since the account exists). This also gives the user
+  the option to do a recovery flow.
+
+  1. User registers with password (or other credentials)
+  2. User forgot they registered with password and tries to login through an
+     OIDC provider (e.g. Google)
+  3. Kratos attempts a registration since the OIDC credentials do not exist
+  4. (optional) User needs to add missing traits
+  5. User is returned to a Login flow with the duplication error
+
 - Let DB generate ID for session devices
   ([62402c7](https://github.com/ory/kratos/commit/62402c7bed3c57ef5b957572e4b84f56d9c530ae))
 - Make notification to unknown recipients configurable
