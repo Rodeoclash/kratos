@@ -101,7 +101,9 @@ func (s *Strategy) linkedProviders(ctx context.Context, r *http.Request, conf *C
 	var result []Provider
 	for _, p := range available.Providers {
 		prov, err := conf.Provider(p.Provider, s.d)
-		if err != nil {
+		if errors.Is(err, herodot.ErrNotFound) {
+			continue
+		} else if err != nil {
 			return nil, err
 		}
 		result = append(result, prov)

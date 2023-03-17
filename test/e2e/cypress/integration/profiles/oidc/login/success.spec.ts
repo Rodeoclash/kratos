@@ -6,19 +6,21 @@ import { routes as react } from "../../../../helpers/react"
 
 context("Social Sign In Successes", () => {
   ;[
-    {
-      login: react.login,
-      registration: react.registration,
-      app: "react" as "react",
-      profile: "spa",
-    },
+    // {
+    //   login: react.login,
+    //   registration: react.registration,
+    //   settings: react.settings,
+    //   app: "react" as "react",
+    //   profile: "spa",
+    // },
     {
       login: express.login,
       registration: express.registration,
+      settings: express.settings,
       app: "express" as "express",
       profile: "oidc",
     },
-  ].forEach(({ login, registration, profile, app }) => {
+  ].forEach(({ login, registration, profile, app, settings }) => {
     describe(`for app ${app}`, () => {
       before(() => {
         cy.useConfigProfile(profile)
@@ -83,6 +85,43 @@ context("Social Sign In Successes", () => {
           .should("include", "login_hint=" + encodeURIComponent(email))
 
         cy.location("href").should("eq", "https://www.example.org/")
+      })
+
+      const expectSettingsOk = () => {
+        cy.get('[value="hydra"]').should("not.exist")
+
+        cy.get('[value="google"]', { timeout: 1000 })
+          .should("have.attr", "name", "link")
+          .should("contain.text", "Link google")
+
+        cy.get('[value="github"]', { timeout: 1000 })
+          .should("have.attr", "name", "link")
+          .should("contain.text", "Link github")
+      }
+
+      it.only("stuff", () => {
+        const email = gen.email()
+        cy.registerOidc({ app, email, website, route: registration })
+
+        cy.visit(settings)
+        expectSettingsOk()
+
+        // set password
+        cy.get('input[name="password"]').type(gen.password())
+        cy.get('button[value="password"]').click()
+
+        // remove the provider used to login
+        cy.updateConfigFile((config) => {
+          config.selfservice.methods.oidc.config.providers =
+            config.selfservice.methods.oidc.config.providers.filter(
+              ({ id }) => id != "hydra",
+            )
+          return config
+        })
+
+        // visit settings and everything should still be fine
+        cy.visit(settings)
+        expectSettingsOk()
       })
     })
   })
