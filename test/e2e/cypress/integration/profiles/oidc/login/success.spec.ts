@@ -38,6 +38,7 @@ context("Social Sign In Successes", () => {
       })
 
       it("should be able to sign up with redirects", () => {
+        cy.enableVerification()
         const email = gen.email()
         cy.registerOidc({
           app,
@@ -45,7 +46,9 @@ context("Social Sign In Successes", () => {
           website,
           route: registration + "?return_to=https://www.example.org/",
         })
-        cy.location("href").should("eq", "https://www.example.org/")
+        cy.location("href")
+          .should("contain", "https://www.example.org/")
+          .should("contain", encodeURIComponent(email))
         cy.logout()
         cy.noSession()
         cy.loginOidc({
@@ -56,6 +59,7 @@ context("Social Sign In Successes", () => {
       })
 
       it("should be able to log in with upstream parameters", () => {
+        cy.enableVerification()
         const email = gen.email()
         cy.registerOidc({
           app,
@@ -64,7 +68,9 @@ context("Social Sign In Successes", () => {
           route: registration + "?return_to=https://www.example.org/",
         })
 
-        cy.location("href").should("eq", "https://www.example.org/")
+        cy.location("href")
+          .should("contain", "https://www.example.org/")
+          .should("contain", encodeURIComponent(email))
         cy.logout()
         cy.noSession()
         cy.intercept("GET", "**/oauth2/auth*").as("getHydraLogin")

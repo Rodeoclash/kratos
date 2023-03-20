@@ -3226,6 +3226,72 @@
       "type": "string",
       "title": "Authenticator Assurance Level (AAL)"
     },
+    "continueWith": {
+      "type": "object"
+    },
+    "continueWithSetOrySessionToken": {
+      "description": "Indicates that a session was issued, and the application should use this token for authenticated requests",
+      "type": "object",
+      "required": [
+        "action",
+        "ory_session_token"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action will always be `set_ory_session_token`\nset_ory_session_token ContinueWithActionSetOrySessionToken\nverification_ui ContinueWithActionVerificationUI",
+          "type": "string",
+          "enum": [
+            "set_ory_session_token",
+            "verification_ui"
+          ],
+          "x-go-enum-desc": "set_ory_session_token ContinueWithActionSetOrySessionToken\nverification_ui ContinueWithActionVerificationUI"
+        },
+        "ory_session_token": {
+          "description": "Token is the token of the session",
+          "type": "string"
+        }
+      }
+    },
+    "continueWithVerificationUI": {
+      "description": "Indicates, that the UI flow could be continued by showing a verification ui",
+      "type": "object",
+      "required": [
+        "action",
+        "flow"
+      ],
+      "properties": {
+        "action": {
+          "description": "Action will always be `verification_ui`\nset_ory_session_token ContinueWithActionSetOrySessionToken\nverification_ui ContinueWithActionVerificationUI",
+          "type": "string",
+          "enum": [
+            "set_ory_session_token",
+            "verification_ui"
+          ],
+          "x-go-enum-desc": "set_ory_session_token ContinueWithActionSetOrySessionToken\nverification_ui ContinueWithActionVerificationUI"
+        },
+        "flow": {
+          "$ref": "#/definitions/continueWithVerificationUIFlow"
+        }
+      }
+    },
+    "continueWithVerificationUIFlow": {
+      "type": "object",
+      "required": [
+        "id",
+        "verifiable_address"
+      ],
+      "properties": {
+        "id": {
+          "description": "The ID of the verification flow",
+          "type": "string",
+          "format": "uuid"
+        },
+        "verifiable_address": {
+          "description": "The address that should be verified in this flow",
+          "type": "string"
+        }
+      }
+    },
     "courierMessageStatus": {
       "description": "A Message's Status",
       "type": "integer",
@@ -4587,6 +4653,13 @@
           "description": "Active, if set, contains the registration method that is being used. It is initially\nnot set.",
           "type": "string"
         },
+        "continue_with": {
+          "description": "Contains a list of actions, that could follow this flow\n\nIt can, for example, contain a reference to the verification flow, created as part of the user's\nregistration.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/continueWith"
+          }
+        },
         "expires_at": {
           "description": "ExpiresAt is the time (UTC) when the flow expires. If the user still wishes to update the setting,\na new flow has to be initiated.",
           "type": "string",
@@ -4652,6 +4725,13 @@
         "identity"
       ],
       "properties": {
+        "continue_with": {
+          "description": "Contains a list of actions, that could follow this flow\n\nIt can, for example, this will contain a reference to the verification flow, created as part of the user's\nregistration or the token of the session.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/continueWith"
+          }
+        },
         "identity": {
           "$ref": "#/definitions/identity"
         },

@@ -185,6 +185,7 @@ context("Social Sign Up Successes", () => {
       })
 
       it("should be able to sign up with redirects", () => {
+        cy.enableVerification()
         const email = gen.email()
         cy.registerOidc({
           app,
@@ -192,7 +193,9 @@ context("Social Sign Up Successes", () => {
           website,
           route: registration + "?return_to=https://www.ory.sh/",
         })
-        cy.location("href").should("eq", "https://www.ory.sh/")
+        cy.location("href")
+          .should("contain", "https://www.ory.sh/")
+          .should("contain", encodeURIComponent(email))
         cy.logout()
       })
 

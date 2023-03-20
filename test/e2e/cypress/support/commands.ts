@@ -504,10 +504,8 @@ Cypress.Commands.add(
     cy.request({ url })
       .then(({ body }) => {
         const form = body.ui
-        // label should still exist after request, for more detail: #2591
-        expect(form.nodes[1].meta).to.not.be.null
-        expect(form.nodes[1].meta.label).to.not.be.null
-        expect(form.nodes[1].meta.label.text).to.equal("Email")
+        expect(form.nodes.some((node) => node.meta?.label?.text === "Email")).to
+          .be.true
 
         return cy.request({
           method: form.method,

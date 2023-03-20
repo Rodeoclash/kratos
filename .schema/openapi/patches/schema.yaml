@@ -33,3 +33,17 @@
 
 - op: remove
   path: "#/components/schemas/identityTraits/type"
+
+- op: add
+  path: /components/schemas/continueWith/discriminator
+  value:
+    propertyName: action
+    mapping:
+      verification_ui: "#/components/schemas/continueWithVerificationUI"
+      set_ory_session_token: "#/components/schemas/continueWithSetOrySessionToken"
+
+- op: add
+  path: /components/schemas/continueWith/oneOf
+  value:
+    - "$ref": "#/components/schemas/continueWithVerificationUI"
+    - "$ref": "#/components/schemas/continueWithSetOrySessionToken"

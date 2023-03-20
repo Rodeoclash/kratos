@@ -84,6 +84,18 @@
         "hook"
       ]
     },
+    "selfServiceShowVerificationUIHook": {
+      "type": "object",
+      "properties": {
+        "hook": {
+          "const": "show_verification_ui"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "hook"
+      ]
+    },
     "webHookAuthBasicAuthProperties": {
       "properties": {
         "type": {
@@ -724,6 +736,9 @@
               },
               {
                 "$ref": "#/definitions/selfServiceWebHook"
+              },
+              {
+                "$ref": "#/definitions/selfServiceShowVerificationUIHook"
               }
             ]
           },
